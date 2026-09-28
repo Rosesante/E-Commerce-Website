@@ -9,6 +9,8 @@ class User(AbstractUser):
         ("manager", "Manager"),
     )
 
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=50, choices=ROLE_CHOICES, default="customer")
     phone_number = models.CharField(max_length=30, blank=True, null=True)
