@@ -11,7 +11,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ("name", "category", "price", "stock_quantity", "is_available", "created_at",)
+    list_display = ("name", "category", "price", "discount_price", "stock_quantity", "is_available", "created_at",)
     list_filter = ("category", "is_available", "created_at",)
     search_fields = ("name", "sku", "brand",)
     prepopulated_fields = { "slug": ("name",) }
@@ -21,3 +21,4 @@ class ProductImageAdmin(admin.ModelAdmin):
     list_display = ( "product", "is_primary", "created_at", )
     list_filter = ("is_primary",)
     search_fields = ("product__name",)
+    
