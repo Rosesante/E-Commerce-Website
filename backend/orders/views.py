@@ -1,14 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
-
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from .models import Cart, CartItem, Order, OrderItem
-from .serializers import (
-    CartSerializer,
-    CartItemSerializer,
-    OrderSerializer,
-)
+from .serializers import (CartSerializer, CartItemSerializer,OrderSerializer)
 from products.models import Product
 
 
@@ -27,7 +22,7 @@ class CartView(generics.RetrieveAPIView):
 
 class AddToCartView(generics.CreateAPIView):
     serializer_class = CartItemSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         product_id = request.data.get("product")
@@ -40,7 +35,7 @@ class AddToCartView(generics.CreateAPIView):
         )
 
         cart, created = Cart.objects.get_or_create(
-            user_id=1
+            user=request.user
         )
 
         cart_item, item_created = CartItem.objects.get_or_create(
@@ -60,14 +55,13 @@ class AddToCartView(generics.CreateAPIView):
             status=status.HTTP_201_CREATED
         )
 
-
 class UpdateCartItemView(generics.UpdateAPIView):
     serializer_class = CartItemSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return CartItem.objects.filter(
-            cart__user_id=1
+            cart__user=self.request.user
         )
 
     def update(self, request, *args, **kwargs):
@@ -96,45 +90,44 @@ class UpdateCartItemView(generics.UpdateAPIView):
 
         return Response(serializer.data)
 
-
 class RemoveCartItemView(generics.DestroyAPIView):
     serializer_class = CartItemSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return CartItem.objects.filter(
-            cart__user_id=1
+            cart__user=self.request.user
         )
 
 
 class OrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Order.objects.filter(
-            user_id=1
+            user=self.request.user
         ).order_by("-created_at")
 
 
 class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Order.objects.filter(
-            user_id=1
+            user=self.request.user
         )
 
 
 class CreateOrderView(generics.CreateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
         cart = get_object_or_404(
             Cart,
-            user_id=1
+            user=request.user
         )
 
         cart_items = cart.items.select_related(
@@ -177,7 +170,7 @@ class CreateOrderView(generics.CreateAPIView):
         )
 
         order = Order.objects.create(
-            user_id=1,
+            user=request.user,
             order_number=self.generate_order_number(),
             total_amount=total_amount,
             delivery_address=delivery_address,
@@ -207,5 +200,14 @@ class CreateOrderView(generics.CreateAPIView):
 
     def generate_order_number(self):
         import uuid
-
         return f"ORD-{uuid.uuid4().hex[:10].upper()}"
+
+class CartView(generics.RetrieveAPIView):
+    serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        cart, created = Cart.objects.get_or_create(
+            user=self.request.user
+        )
+        return cart    

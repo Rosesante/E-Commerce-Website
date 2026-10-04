@@ -1,5 +1,5 @@
 from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Review
 from .serializers import ReviewSerializer
@@ -7,20 +7,20 @@ from .serializers import ReviewSerializer
 
 class ReviewListCreateView(generics.ListCreateAPIView):
     serializer_class = ReviewSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Review.objects.all()
 
     def perform_create(self, serializer):
-        # Temporary user for API testing.
-        # Authentication will be added later.
-        serializer.save(user_id=1)
+        serializer.save(user=self.request.user)
 
 
 class ReviewDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ReviewSerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Review.objects.all()
+        return Review.objects.filter(
+            user=self.request.user
+        )
